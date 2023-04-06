@@ -1,43 +1,73 @@
-const { response } = require('express')
+const { response, request } = require('express');
+const Usuario = require('../models/usuario');
+const bcryptjs = require('bcryptjs');
 
 
-const usuarioGet = (req, res) => {
+const usuarioGet = async (req, res) => {
 
-    const { a, q, c = "No c" } = req.query;
+    const { limite = 5, desde = 0 } = req.query;
 
+    const [total, listado] = await Promise.all([
+        Usuario.countDocuments({ estado: true }),
+        Usuario.find({ estado: true }).limit(limite).skip(desde)
+    ]);
 
     res.json({
-        'msg': 'get Api - controllador',
-        a, q, c
+        total,
+        listado
     })
 };
 
 
-const usuarioPut = (req, res) => {
+const usuarioPut = async (req = request, res = response) => {
 
     const { id } = req.params;
+    const { _id, constrasena, google, ...resto } = req.body;
+
+    if (constrasena) {
+        const salt = bcryptjs.genSaltSync(10);
+        resto.constrasena = bcryptjs.hashSync(constrasena, salt);
+    }
+
+    //cconsole.log('resto', resto);
+
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto);
+    console.log('usuario');
+
+
 
     res.json({
-        'msg': 'put Api - controllador',
-        id
+        usuario
     })
 };
 
-const usuarioPost = (req, res) => {
+const usuarioPost = async (req = request, res = response) => {
 
 
-    const { nombre, edad } = req.body;
-    console.log(req.body);
+    const { nombre, correo, constrasena, rol } = req.body;
+    const usuario = new Usuario({ nombre, correo, constrasena, rol });
+    const salt = bcryptjs.genSaltSync(10);
+    usuario.constrasena = bcryptjs.hashSync(constrasena, salt);
+
+    await usuario.save();
 
     res.json({
         'msg': 'post Api - controllador',
-        nombre, edad
+        usuario
     })
 }
 
-const usuarioDelete = (req, res) => {
+const usuarioDelete = async (req, res) => {
+   
+    const {id} = req.params;
+
+    //const usuario = await Usuario.findByIdAndDelete(id);
+   
+    const usuario = await Usuario.findByIdAndUpdate(id, {estado : false});
+
     res.json({
-        'msg': 'delete Api - controllador'
+        usuario
     })
 }
 
