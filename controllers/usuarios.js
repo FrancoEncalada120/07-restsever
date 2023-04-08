@@ -59,16 +59,32 @@ const usuarioPost = async (req = request, res = response) => {
 }
 
 const usuarioDelete = async (req, res) => {
-   
-    const {id} = req.params;
+
+    const { id } = req.params;
+    const usuarioAuth = req.usuarioAuth;
 
     //const usuario = await Usuario.findByIdAndDelete(id);
-   
-    const usuario = await Usuario.findByIdAndUpdate(id, {estado : false});
+
+    const usuario = await Usuario.findByIdAndUpdate(id, { estado: false });
+
+    if (!usuarioAuth) {
+        res.json({
+            'msg': 'usario auth no existe',
+            usuario
+        })
+    }
+
+    if (!usuarioAuth.estado == true) {
+        res.json({
+            'msg': 'usario con estado en false',
+            usuario
+        })
+    }
 
     res.json({
-        usuario
-    })
+        usuario,
+        usuarioAuth
+    });
 }
 
 module.exports = { usuarioGet, usuarioPut, usuarioPost, usuarioDelete }
